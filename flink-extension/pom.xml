@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.blaze</groupId>
+    <artifactId>blaze-engine</artifactId>
+    <version>${revision}</version>
+    <relativePath>../</relativePath>
+  </parent>
+  <groupId>org.blaze</groupId>
+  <artifactId>flink-extension</artifactId>
+  <packaging>jar</packaging>
+
+  <properties>
+    <flink.version>2.0.1-flink-1.18-Native-BETA-SNAPSHOT</flink.version>
+    <flink.markBundledAsOptional>false</flink.markBundledAsOptional>
+    <janino.version>3.1.10</janino.version>
+    <guava.version>31.1-jre</guava.version>
+    <scala.binary.version>2.12</scala.binary.version>
+    <spotless.scalafmt.version>3.4.3</spotless.scalafmt.version>
+    <spotless.delimiter>package</spotless.delimiter>
+    <spotless.license.header>/*
+            * Licensed to the Apache Software Foundation (ASF) under one
+            * or more contributor license agreements.  See the NOTICE file
+            * distributed with this work for additional information
+            * regarding copyright ownership.  The ASF licenses this file
+            * to you under the Apache License, Version 2.0 (the
+            * "License"); you may not use this file except in compliance
+            * with the License.  You may obtain a copy of the License at
+            *
+            *     http://www.apache.org/licenses/LICENSE-2.0
+            *
+            * Unless required by applicable law or agreed to in writing, software
+            * distributed under the License is distributed on an "AS IS" BASIS,
+            * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+            * See the License for the specific language governing permissions and
+            * limitations under the License.
+            */</spotless.license.header>
+    <surefire.module.config>
+      <!--
+			HashAggCodeGeneratorTest / AggTestBase
+			-->
+      --add-opens=java.base/java.lang=ALL-UNNAMED
+      <!--
+			chill ArraysAsListSerializer
+			-->
+      --add-opens=java.base/java.util=ALL-UNNAMED
+      <!--
+			kryo AtomicBoolean
+			-->
+      --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED
+      <!--
+			kryo LocalDate/ZoneOffset
+			-->
+      --add-opens=java.base/java.time=ALL-UNNAMED
+      <!--
+			kryo MathContext
+			-->
+      --add-opens=java.base/java.math=ALL-UNNAMED
+      <!--
+			kryo ByteBuffer
+			-->
+      --add-opens=java.base/java.nio=ALL-UNNAMED
+    </surefire.module.config>
+  </properties>
+
+  <dependencies>
+    <!-- Mainly used for calcite-core, relocated in org.apache.flink.calcite.shaded by the shade plugin -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+      <optional>${flink.markBundledAsOptional}</optional>
+      <exclusions>
+        <exclusion>
+          <groupId>org.checkerframework</groupId>
+          <artifactId>checker-qual</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <version>2.8.8</version>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value-annotations</artifactId>
+      <version>2.8.8</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.janino</groupId>
+      <artifactId>commons-compiler</artifactId>
+      <version>${janino.version}</version>
+    </dependency>
+    <dependency>
+      <!-- Used for code generation -->
+      <groupId>org.codehaus.janino</groupId>
+      <artifactId>janino</artifactId>
+      <version>${janino.version}</version>
+    </dependency>
+
+    <!-- Table API Java dependencies (not included in the uber) -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-api-java-bridge</artifactId>
+      <version>${flink.version}</version>
+    </dependency>
+
+    <!-- Flink Scala (included only in the loader-bundle) -->
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-scala_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+    </dependency>
+
+    <!-- Table SQL Parser dependencies (included in the uber) -->
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-sql-parser</artifactId>
+      <version>${flink.version}</version>
+      <optional>${flink.markBundledAsOptional}</optional>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.calcite</groupId>
+          <artifactId>calcite-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.checkerframework</groupId>
+      <artifactId>checker-qual</artifactId>
+      <version>3.12.0</version>
+      <optional>${flink.markBundledAsOptional}</optional>
+    </dependency>
+
+    <!-- Table planner -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-planner_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+    </dependency>
+
+    <!-- Table Runtime (not included in the uber) -->
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-runtime</artifactId>
+      <version>${flink.version}</version>
+    </dependency>
+
+    <!-- Table Calcite Bridge (included in the uber) -->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-calcite-bridge</artifactId>
+      <version>${flink.version}</version>
+      <optional>${flink.markBundledAsOptional}</optional>
+    </dependency>
+
+    <!-- Test dependencies -->
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-test-utils</artifactId>
+      <version>${flink.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Table API Scala dependencies -->
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-api-scala_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-api-scala-bridge_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-core</artifactId>
+      <version>${flink.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-common</artifactId>
+      <version>${flink.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-api-java</artifactId>
+      <version>${flink.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-runtime</artifactId>
+      <version>${flink.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-streaming-java</artifactId>
+      <version>${flink.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-statebackend-rocksdb</artifactId>
+      <version>${flink.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <!-- For using the filesystem connector in tests -->
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-connector-files</artifactId>
+      <version>${flink.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- arrow dependency -->
+    <dependency>
+      <groupId>org.apache.arrow</groupId>
+      <artifactId>arrow-vector</artifactId>
+      <version>${arrowVersion}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.arrow</groupId>
+      <artifactId>arrow-memory-core</artifactId>
+      <version>${arrowVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.arrow</groupId>
+      <artifactId>arrow-c-data</artifactId>
+      <version>${arrowVersion}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.blaze</groupId>
+      <artifactId>proto</artifactId>
+      <version>${revision}</version>
+    </dependency>
+
+    <!--        <dependency>-->
+    <!--            <groupId>org.apache.flink</groupId>-->
+    <!--            <artifactId>flink-python</artifactId>-->
+    <!--            <version>${flink.version}</version>-->
+    <!--        </dependency>-->
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--            <plugin>-->
+      <!--                <groupId>com.diffplug.spotless</groupId>-->
+      <!--                <artifactId>spotless-maven-plugin</artifactId>-->
+      <!--                <configuration>-->
+      <!--                    <scala>-->
+      <!--                        <scalafmt>-->
+      <!--                            <version>${spotless.scalafmt.version}</version>-->
+      <!--                            <file>${project.basedir}/../../.scalafmt.conf</file>-->
+      <!--                        </scalafmt>-->
+      <!--                        <licenseHeader>-->
+      <!--                            <content>${spotless.license.header}</content>-->
+      <!--                            <delimiter>${spotless.delimiter}</delimiter>-->
+      <!--                        </licenseHeader>-->
+      <!--                    </scala>-->
+      <!--                </configuration>-->
+      <!--            </plugin>-->
+      <!-- Scala Compiler -->
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <executions>
+          <!-- Run scala compiler in the process-resources phase, so that dependencies on
+                        scala classes can be resolved later in the (Java) compile phase -->
+          <execution>
+            <id>scala-compile-first</id>
+            <goals>
+              <goal>add-source</goal>
+              <goal>compile</goal>
+            </goals>
+            <phase>process-resources</phase>
+          </execution>
+
+          <!-- Run scala compiler in the process-test-resources phase, so that dependencies on
+                         scala classes can be resolved later in the (Java) test-compile phase -->
+          <execution>
+            <id>scala-test-compile</id>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <phase>process-test-resources</phase>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <configuration>
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+              <resource>META-INF/services/org.apache.flink.table.factories.Factory</resource>
+            </transformer>
+          </transformers>
+          <!-- Base config -->
+          <createDependencyReducedPom>true</createDependencyReducedPom>
+          <keepDependenciesWithProvidedScope>false</keepDependenciesWithProvidedScope>
+          <filters combine.children="append">
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <!-- Excluded all these files for a clean flink-table-planner JAR -->
+                <exclude>org-apache-calcite-jdbc.properties</exclude>
+                <exclude>common.proto</exclude>
+                <exclude>requests.proto</exclude>
+                <exclude>responses.proto</exclude>
+                <exclude>codegen/**</exclude>
+                <exclude>META-INF/*.SF</exclude>
+                <exclude>META-INF/*.DSA</exclude>
+                <exclude>META-INF/*.RSA</exclude>
+                <exclude>META-INF/services/java.sql.Driver</exclude>
+                <exclude>META-INF/versions/11/module-info.class</exclude>
+                <!-- com.ibm.icu:icu4j includes a LICENSE file in its root folder -->
+                <exclude>LICENSE</exclude>
+              </excludes>
+            </filter>
+          </filters>
+          <artifactSet>
+            <includes combine.children="append">
+              <include>org.apache.calcite:*</include>
+              <include>org.apache.calcite.avatica:*</include>
+
+              <!-- Calcite's dependencies -->
+              <include>org.locationtech.jts:jts-core</include>
+              <include>com.google.guava:guava</include>
+              <include>com.google.guava:failureaccess</include>
+              <include>commons-codec:commons-codec</include>
+              <include>commons-io:commons-io</include>
+              <include>org.checkerframework:checker-qual</include>
+
+              <!-- flink-table-planner dependencies -->
+              <include>org.apache.flink:flink-sql-parser</include>
+              <include>org.apache.flink:flink-table-calcite-bridge</include>
+            </includes>
+          </artifactSet>
+          <relocations>
+            <!-- Calcite is not relocated for now, because we expose it at some locations such as CalciteConfig -->
+            <!--<relocation>
+                            <pattern>org.apache.calcite</pattern>
+                            <shadedPattern>org.apache.flink.calcite.shaded.org.apache.calcite</shadedPattern>
+                        </relocation>-->
+
+            <!-- Calcite's dependencies -->
+            <!-- Keep it in sync with flink-sql-client -->
+            <relocation>
+              <pattern>com.google</pattern>
+              <shadedPattern>org.apache.flink.calcite.shaded.com.google</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>org.apache.commons.codec</pattern>
+              <shadedPattern>org.apache.flink.calcite.shaded.org.apache.commons.codec</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>org.apache.commons.io</pattern>
+              <shadedPattern>org.apache.flink.calcite.shaded.org.apache.commons.io</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>org.checkerframework</pattern>
+              <shadedPattern>org.apache.flink.calcite.shaded.org.checkerframework</shadedPattern>
+            </relocation>
+
+            <!-- These are relocated to match package names, but not included in this jar -->
+            <relocation>
+              <pattern>com.fasterxml</pattern>
+              <!-- From flink-shaded-jackson -->
+              <shadedPattern>org.apache.flink.shaded.jackson2.com.fasterxml</shadedPattern>
+            </relocation>
+            <relocation>
+              <pattern>com.jayway</pattern>
+              <!-- From flink-table-runtime -->
+              <shadedPattern>org.apache.flink.table.shaded.com.jayway</shadedPattern>
+            </relocation>
+
+            <relocation>
+              <!-- icu4j's dependencies -->
+              <pattern>com.ibm.icu</pattern>
+              <shadedPattern>org.apache.flink.table.shaded.com.ibm.icu</shadedPattern>
+            </relocation>
+          </relocations>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>integration-tests</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <phase>integration-test</phase>
+            <configuration>
+              <includes>
+                <include>**/*ITCase.*</include>
+              </includes>
+              <!-- Setting this property to false is aims to alleviate OOM error
+                            mentioned in issue: https://issues.apache.org/jira/browse/FLINK-18356.
+                            This property can be removed after the OOM error mentioned in the above
+                            issue is solved. -->
+              <reuseForks>false</reuseForks>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- deploy value connector's source code when user uses it. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-test-sources</id>
+            <goals>
+              <goal>test-jar-no-fork</goal>
+            </goals>
+            <configuration>
+              <archive>
+                <!-- Globally exclude maven metadata, because it may accidentally bundle files we don't intend to -->
+                <addMavenDescriptor>false</addMavenDescriptor>
+              </archive>
+              <includes>
+                <!-- Only include factories sources, because this is where the value connector is stored. -->
+                <include>**/factories/**</include>
+                <include>META-INF/LICENSE</include>
+                <include>META-INF/NOTICE</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
