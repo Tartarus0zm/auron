@@ -19,13 +19,13 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.runtime.operators.TableStreamOperator;
 import org.apache.flink.table.types.logical.RowType;
 import org.blaze.flink.arrow.io.FlinkArrowFFIExporter;
 import org.blaze.flink.config.FlinkBlazeOptions;
 import org.blaze.flink.sql.JniBridge;
+import org.blaze.flink.sql.NativeHelper;
 import org.blaze.flink.utils.NativeConverters;
 import org.blaze.protobuf.*;
 
@@ -65,9 +65,8 @@ public class FlinkBlazeCalcOperator extends TableStreamOperator<RowData>
                     .setExportIterProviderResourceId(resourceId)
                     .build())
             .setProjection(ProjectionExecNode.newBuilder().addExpr(PhysicalExprNode.newBuilder().setBinaryExpr(
-                    PhysicalBinaryExprNode.newBuilder().
-            )))
-            .build(),
+                    PhysicalBinaryExprNode.newBuilder().build()
+            ))).build(),
         metrics);
     }
 
